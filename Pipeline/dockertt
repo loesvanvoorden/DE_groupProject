@@ -12,4 +12,4 @@ RUN pip install -r requirements.txt
 COPY training-testing.py .
 
 # Set the command to run the script
-ENTRYPOINT ["python", "training-testing.ipynb"]
+ENTRYPOINT ["python", "training-testing.py"]
