@@ -17,11 +17,11 @@ class PerformancePredictor:
         if self.model is None:
             try:
                 model_repo = os.environ['MODEL_REPO']
-                file_path = os.path.join(model_repo, "model.h5")
+                file_path = os.path.join(model_repo, "model_train.pkl")
                 self.model = load_model(file_path)
             except KeyError:
                 print("MODEL_REPO is undefined")
-                self.model = load_model('model.h5')
+                self.model = load_model('model_train.pkl')
 
         df = pd.read_json(StringIO(json.dumps(prediction_input)), orient='records')
         y_pred = self.model.predict(df)

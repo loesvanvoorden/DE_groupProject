@@ -11,10 +11,13 @@ app = Flask(__name__)
 
 # A decorator used to tell the application
 # which URL is associated function
-@app.route('/checkdiabetes', methods=["GET", "POST"])
-def check_diabetes():
+@app.route('/checkperformance', methods=["GET", "POST"])
+def check_performance():
     if request.method == "GET":
         return render_template("input_form_page.html")
+    
+    # THIS HAS TO BE CHANGED TO OUR PERFORMANCE API
+    # -----------------------------------------
 
     elif request.method == "POST":
         prediction_input = [
@@ -29,6 +32,8 @@ def check_diabetes():
                 "age": int(request.form.get("age"))
             }
         ]
+
+        # -----------------------------------------
 
         logging.debug("Prediction input : %s", prediction_input)
 

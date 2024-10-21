@@ -8,7 +8,7 @@ import pandas as pd
 from flask import jsonify
 
 
-class DiabetesPredictor:
+class PerformancePredictor:
     def __init__(self):
         self.model = None
 
@@ -27,7 +27,7 @@ class DiabetesPredictor:
                 self.model = pickle.load(open("model.pkl", 'rb'))
 
         df = pd.read_json(StringIO(json.dumps(prediction_input)), orient='records')
-        xNew = df[['ntp', 'pgc', 'dbp', 'tsft', 'si', 'bmi', 'dpf', 'age']]
+        xNew = df[['schoolsup', 'higher', 'absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout', 'freetime', 'studytime']]
         dfcp = df.copy()
         y_classes = self.model.predict(xNew)
         logging.info(y_classes)
