@@ -37,11 +37,11 @@ class PerformancePredictor:
         if self.model is None:
             try:
                 model_repo = os.environ['MODEL_REPO']
-                file_path = os.path.join(model_repo, "model.pkl")
+                file_path = os.path.join(model_repo, "model_train.pkl")
                 self.model = pickle.load(open(file_path, 'rb'))
             except KeyError:
                 print("MODEL_REPO is undefined")
-                self.model = pickle.load(open("model.pkl", 'rb'))
+                self.model = pickle.load(open("model_train.pkl", 'rb'))
 
         # Convert prediction_input to DataFrame
         df = pd.read_json(StringIO(json.dumps(prediction_input)), orient='records')
