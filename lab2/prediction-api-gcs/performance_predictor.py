@@ -66,7 +66,7 @@ class PerformancePredictor:
         logging.info(y_classes)
 
         # Assuming your model now predicts classes 0 and 2
-        df['pclass'] = np.where(y_classes > 0.5, 2, 0)  # Convert predictions to classes 0 and 2
+        df['pclass'] = np.where(y_classes > 0.5, 1, 0)  # Convert predictions to classes 0 and 2
         status = df['pclass'][0]  # Get the predicted class for the first record
 
         # Return the prediction outcome as a JSON message
