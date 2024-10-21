@@ -18,6 +18,9 @@ def train(dataset):
     # Define feature set X and target variable y
     categorical_columns = ['schoolsup', 'higher']
     numerical_columns = ['absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout', 'freetime', 'studytime']
+    columns_to_average = ['G1', 'G2', 'G3']
+    dataset['Average_Grade'] = dataset[columns_to_average].mean(axis=1)
+    dataset['Average_Grade_Cat_1'] = pd.cut(dataset['Average_Grade'], bins=[0, 10, 20], labels=[0, 1], include_lowest=True)
     X = dataset[numerical_columns + categorical_columns]
     y = dataset['Average_Grade_Cat_1']
 
@@ -68,7 +71,7 @@ def train(dataset):
     # Save the model as a .pkl file
     model_repo = os.environ.get('MODEL_REPO', None)
     if model_repo:
-        model_output_path = os.path.join(model_repo, "model.pkl")  # Save to the repo as .pkl
+        model_output_path = os.path.join(model_repo, "model_train.pkl")  # Save to the repo as .pkl
     else:
         model_output_path = "model_train.pkl"  # default local path
 
