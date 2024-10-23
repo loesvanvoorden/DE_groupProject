@@ -11,7 +11,7 @@ COPY . .
 # Expose the port that our app runs in
 EXPOSE 5000
 # Enviroment Variables
-ENV PROJECT_ID=assignment1de
+ENV PROJECT_ID=de2024-436414
 ENV MODEL_REPO=gs://assignment1de
 ENV MODEL_NAME=model_train.pkl
 # Run our App
