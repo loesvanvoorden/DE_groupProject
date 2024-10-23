@@ -1,16 +1,13 @@
-<!-- CHANGE TO PERFORMANCE VARIABLES -->
-
 <html>
 <head>
-    <title>Likelihood of Diabetes</title>
+    <title>Likelihood of study performance</title>
 </head>
 <body>
 
-{% if prediction_variable==true %}
-    <p>It is likely that you may have diabetes.</p>
+{% if prediction_variable==1 %}
+    <p>It is likely that you will perform well at your study.</p>
 {% else %}
-    <p>It is unlikely that you have diabetes.</p>
+    <p>It is unlikely that you will perform well at your study.</p>
 {% endif %}
 </body>
 </html>
-<!-- check https://flask.palletsprojects.com/en/2.3.x/tutorial/templates/ for information if needed -->

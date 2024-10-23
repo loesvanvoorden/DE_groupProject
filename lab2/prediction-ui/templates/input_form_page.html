@@ -2,36 +2,109 @@
 
 <html>
 <head>
-    <title>Diabetes Check Form</title>
+    <title>Student performance assessor form</title>
 </head>
 <body>
 
-<form action="/checkdiabetes" method="POST">
-    <h1> Check My Diabetes</h1>
-    <label for="ntp">Number of times pregnant:</label>
-    <input type="text" id="ntp" name="ntp" placeholder="ntp"> <br>
 
-    <label for="pgc">Plasma glucose concentration a 2 hours in an oral glucose tolerance test:</label>
-    <input type="text" id="pgc" name="pgc" placeholder="pgc"> <br>
+<form action="/checkperformance" method="POST">
+    <h1> Study performance assessor</h1>
+    <label for="schoolsup">Do you get support from school?</label>
+    <select id="schoolsup" name="schoolsup">
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+    </select> <br>
 
-    <label for="dbp">Diastolic blood pressure (mm Hg):</label>
-    <input type="text" id="dbp" name="dbp" placeholder="dbp"> <br>
+    <label for="higher">Do you have ambition to follow higher education after this?</label>
+    <select id="higher" name="higher">
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+    </select>
+    <br>
 
-    <label for="tsft">Triceps skin fold thickness (mm):</label>
-    <input type="text" id="tsft" name="tsft" placeholder="tsft"> <br>
+    <label for="absences">How many times have you been absent during your study?</label>
+    <input type="text" id="absences" name="absences" placeholder="absences"> <br>
 
-    <label for="si">2-Hour serum insulin (mu U/ml):</label>
-    <input type="text" id="si" name="si" placeholder="si"> <br>
+    <label for="failures">number of past class failures:</label>
+    <input type="text" id="failures" name="failures" placeholder="failures"> <br>
 
-    <label for="bmi">Body mass index:</label>
-    <input type="text" id="bmi" name="bmi" placeholder="bmi"> <br>
+    <label for="Medu">Mother's Education:</label>
+    <select id="Medu" name="Medu" placeholder="Medu">
+        <option value="0">0 - None</option>
+        <option value="1">1 - Primary education (4th grade)</option>
+        <option value="2">2 - 5th to 9th grade</option>
+        <option value="3">3 - Secondary education</option>
+        <option value="4">4 - Higher education</option>
+    </select> <br>
 
-    <label for="dpf">Diabetes pedigree function:</label>
-    <input type="text" id="dpf" name="dpf" placeholder="dpf"> <br>
 
-    <label for="age">Age (years):</label>
-    <input type="text" id="age" name="age" placeholder="age"> <br>
-    <p><input type='submit' value='Check'/></p>
+    <label for="Fedu">Father's Education:</label>
+    <select id="Fedu" name="mothers_education">
+        <option value="0">0 - None</option>
+        <option value="1">1 - Primary education (4th grade)</option>
+        <option value="2">2 - 5th to 9th grade</option>
+        <option value="3">3 - Secondary education</option>
+        <option value="4">4 - Higher education</option>
+    </select> <br>
+
+    <label for="Walc">Weekend Alcohol Consumption:</label>
+    <select id="Walc" name="Walc">
+        <option value="1">1 - Very low</option>
+        <option value="2">2 - Low</option>
+        <option value="3">3 - Medium</option>
+        <option value="4">4 - High</option>
+        <option value="5">5 - Very high</option>
+    </select> <br>
+
+    <label for="Dalc">Workday Alcohol Consumption:</label>
+    <select id="Dalc" name="Dalc">
+        <option value="1">1 - Very low</option>
+        <option value="2">2 - Low</option>
+        <option value="3">3 - Medium</option>
+        <option value="4">4 - High</option>
+        <option value="5">5 - Very high</option>
+    </select>
+    <br>
+
+    <label for="famrel">Quality of Family Relationships:</label>
+    <select id="famrel" name="famrel">
+        <option value="1">1 - Very bad</option>
+        <option value="2">2 - Bad</option>
+        <option value="3">3 - Average</option>
+        <option value="4">4 - Good</option>
+        <option value="5">5 - Excellent</option>
+    </select>
+    <br>
+
+    <label for="freetime">Free Time After School:</label>
+    <select id="freetime" name="freetime">
+        <option value="1">1 - Very low</option>
+        <option value="2">2 - Low</option>
+        <option value="3">3 - Medium</option>
+        <option value="4">4 - High</option>
+        <option value="5">5 - Very high</option>
+    </select>
+    <br>
+
+    <label for="studytime">Weekly Study Time:</label>
+    <select id="studytime" name="studytime">
+        <option value="1">1 - Less than 2 hours</option>
+        <option value="2">2 - 2 to 5 hours</option>
+        <option value="3">3 - 5 to 10 hours</option>
+        <option value="4">4 - More than 10 hours</option>
+    </select>
+    <br>
+
+    <label for="goout">Going Out with Friends:</label>
+    <select id="goout" name="goout">
+        <option value="1">1 - Very low</option>
+        <option value="2">2 - Low</option>
+        <option value="3">3 - Medium</option>
+        <option value="4">4 - High</option>
+        <option value="5">5 - Very high</option>
+    </select>
+    <br>
+
 </form>
 
 </body>

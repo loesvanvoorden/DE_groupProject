@@ -22,14 +22,18 @@ def check_performance():
     elif request.method == "POST":
         prediction_input = [
             {
-                "ntp": int(request.form.get("ntp")),  # getting input with name = ntp in HTML form
-                "pgc": int(request.form.get("pgc")),  # getting input with name = pgc in HTML form
-                "dbp": int(request.form.get("dbp")),
-                "tsft": int(request.form.get("tsft")),
-                "si": int(request.form.get("si")),
-                "bmi": float(request.form.get("bmi")),
-                "dpf": float(request.form.get("dpf")),
-                "age": int(request.form.get("age"))
+                "schoolsup": bool(request.form.get("schoolsup")),  
+                "higher": bool(request.form.get("higher")),  
+                "absences": int(request.form.get("absences")),
+                "failures": int(request.form.get("failures")),
+                "Medu": int(request.form.get("Medu")),
+                "Fedu": float(request.form.get("Fedu")),
+                "Walc": float(request.form.get("Walc")),
+                "Dalc": int(request.form.get("Dalc")),
+                "famrel": int(request.form.get("famrel")),
+                "goout": int(request.form.get("goout")),
+                "freetime": int(request.form.get("freetime")),
+                "studytime": int(request.form.get("studytime"))
             }
         ]
 
