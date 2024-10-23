@@ -2,7 +2,7 @@ import os
 
 from flask import Flask, request
 
-from peformance_predictor import PerformancePredictor
+from performance_predictor import PerformancePredictor
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
