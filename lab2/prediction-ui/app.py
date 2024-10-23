@@ -36,6 +36,7 @@ def check_performance():
                 "studytime": int(request.form.get("studytime"))
             }
         ]
+        print(prediction_input)
 
         # -----------------------------------------
 
