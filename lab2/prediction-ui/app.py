@@ -22,8 +22,8 @@ def check_performance():
     elif request.method == "POST":
         prediction_input = [
             {
-                "schoolsup": bool(request.form.get("schoolsup")),   
-                "higher": bool(request.form.get("higher")),  
+                "schoolsup": str(request.form.get("schoolsup")),   
+                "higher": str(request.form.get("higher")),  
                 "absences": int(request.form.get("absences")),
                 "failures": int(request.form.get("failures")),
                 "Medu": int(request.form.get("Medu")),
