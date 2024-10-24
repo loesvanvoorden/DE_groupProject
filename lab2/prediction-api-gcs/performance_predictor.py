@@ -53,10 +53,13 @@ class PerformancePredictor:
         
         # If the preprocessor is not fitted, fit it with some dummy data or previous training data
         if self.preprocessor is None:
-            # Load the training data to fit the preprocessor; replace this path with your actual training data path
-            train_data_path = os.path.join('lab2', 'data', 'train_data.json')
-            training_data = pd.read_json(train_data_path)
-            self.fit_preprocessor(training_data)
+            try:
+                train_data_path = os.path.join('lab2', 'data', 'train_data.json')
+                training_data = pd.read_json(train_data_path)
+                self.fit_preprocessor(training_data)
+            except FileNotFoundError:
+                logging.error("Training data file not found.")
+                return jsonify({'error': 'Training data file not found.'}), 500
 
         # Apply preprocessor to the new data
         xNew = self.preprocessor.transform(df[['schoolsup', 'higher', 'absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout', 'freetime', 'studytime']])

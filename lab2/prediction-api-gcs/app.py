@@ -4,13 +4,21 @@ from flask import Flask, request
 
 from performance_predictor import PerformancePredictor
 
+import logging
+from flask import Flask, request, render_template, jsonify
+
 app = Flask(__name__)
 app.config["DEBUG"] = True
 
 
-@app.route('/performance_predictor/model', methods=['PUT'])  # trigger updating the model
+@app.route('/performance_predictor/model', methods=['PUT'])
 def refresh_model():
-    return pp.download_model()
+    try:
+        return pp.download_model()
+    except Exception as e:
+        logging.error(f"Model refresh failed: {e}")
+        return jsonify({'error': 'Model refresh failed'}), 500
+
 
 
 @app.route('/performance_predictor/', methods=['POST'])  # path of the endpoint. Except only HTTP POST request
