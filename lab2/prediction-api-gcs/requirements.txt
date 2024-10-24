@@ -3,7 +3,7 @@ flask
 pandas
 keras
 tensorflow
-numpy==1.26.4
+numpy
 h5py
 six
 google-cloud-storage
