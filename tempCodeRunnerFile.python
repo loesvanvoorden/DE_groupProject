@@ -1,0 +1,22 @@
+import requests
+
+url = "https://prediction-api-925934865787.us-central1.run.app/performance_predictor/"
+data = {
+
+    "Medu": 1,
+    "Fedu": 1,
+    "studytime": 2,
+    "failures": 3,
+    "schoolsup": "yes",
+    "higher": "yes",
+    "famrel": 4,
+    "freetime": 3,
+    "goout": 2,
+    "Dalc": 2,
+    "Walc": 3,
+    "absences": 10
+  }
+
+response = requests.post(url, json=data)
+print("Status code:", response.status_code)
+print("Response content:", response.text)
