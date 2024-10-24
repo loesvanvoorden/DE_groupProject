@@ -49,7 +49,7 @@ def check_performance():
         predictor_api_url = os.environ['PREDICTOR_API']
         res = requests.post(predictor_api_url, json=json.loads(json.dumps(prediction_input)))
 
-        prediction_value = res.json()['result']
+        prediction_value = res.json().get('predicted_class')
         logging.info("Prediction Output : %s", prediction_value)
         return render_template("response_page.html",
                                prediction_variable=prediction_value)
