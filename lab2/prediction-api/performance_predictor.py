@@ -49,7 +49,8 @@ class PerformancePredictor:
         # If the preprocessor is not fitted, fit it with some dummy data or previous training data
         if self.preprocessor is None:
             # Load the training data to fit the preprocessor; replace this path with your actual training data path
-            train_data_path = os.path.join('lab2', 'data', 'train_data.json')
+            train_data_path = "lab2/prediction-api/data/train_data.json"
+            print(train_data_path)
             training_data = pd.read_json(train_data_path)
             self.fit_preprocessor(training_data)
 
