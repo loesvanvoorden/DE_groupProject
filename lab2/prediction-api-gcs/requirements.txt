@@ -8,3 +8,4 @@ h5py
 six
 google-cloud-storage
 scikit-learn
+joblib

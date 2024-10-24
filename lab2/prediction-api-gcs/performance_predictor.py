@@ -10,6 +10,7 @@ from keras.models import load_model
 from io import StringIO
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
+import joblib
 
 class PerformancePredictor:
     def __init__(self):
@@ -25,7 +26,7 @@ class PerformancePredictor:
         bucket = client.bucket(model_repo)
         blob = bucket.blob(model_name)
         blob.download_to_filename('local_model.pkl')
-        self.model = load_model('local_model.pkl')
+        self.model = joblib.load('local_model.pkl')
 
     def fit_preprocessor(self, dataset):
         # Define feature set and target variable for the preprocessor
