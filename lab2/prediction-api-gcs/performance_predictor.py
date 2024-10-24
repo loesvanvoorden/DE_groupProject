@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from google.cloud import storage
 import joblib
+import numpy as np
 
 class PerformancePredictor:
     def __init__(self):
@@ -43,23 +44,15 @@ class PerformancePredictor:
         if self.model is None:
             self.download_model()
 
+        # Convert the input JSON to a DataFrame
         df = pd.read_json(StringIO(json.dumps(prediction_input)), orient='records')
 
-        if self.preprocessor is None:
-            try:
-                # Construct the path relative to the base directory
-                train_data_path = os.path.join(self.base_dir, 'lab2', 'data', 'train_data.json')
-                training_data = pd.read_json(train_data_path)
-                self.fit_preprocessor(training_data)
-            except FileNotFoundError:
-                logging.error("Training data file not found.")
-                return jsonify({'error': 'Training data file not found.'}), 500
-
-        xNew = self.preprocessor.transform(df[['schoolsup', 'higher', 'absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout', 'freetime', 'studytime']])
-        y_classes = self.model.predict(xNew)
+        # No need to manually handle the preprocessor as it's part of the model pipeline
+        y_classes = self.model.predict(df[['schoolsup', 'higher', 'absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout', 'freetime', 'studytime']])
         logging.info(y_classes)
 
         df['pclass'] = np.where(y_classes > 0.5, 1, 0)
         status = df['pclass'][0]
 
         return jsonify({'predicted_class': int(status)}), 200
+
