@@ -22,8 +22,8 @@ def check_performance():
     elif request.method == "POST":
         prediction_input = [
             {
-                "schoolsup": str(request.form.get("schoolsup")),
-                "higher": str(request.form.get("higher")),
+                "schoolsup": int(request.form.get("schoolsup")),
+                "higher": int(request.form.get("higher")),
                 "absences": int(request.form.get("absences")),
                 "failures": int(request.form.get("failures")),
                 "Medu": int(request.form.get("Medu")),
@@ -49,7 +49,7 @@ def check_performance():
         predictor_api_url = os.environ['PREDICTOR_API']
         res = requests.post(predictor_api_url, json=json.loads(json.dumps(prediction_input)))
 
-        prediction_value = res.json().get('predicted_class')
+        prediction_value = res.text
         logging.info("Prediction Output : %s", prediction_value)
         return render_template("response_page.html",
                                prediction_variable=prediction_value)
