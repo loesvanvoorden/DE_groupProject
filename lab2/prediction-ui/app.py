@@ -16,11 +16,14 @@ def check_performance():
     if request.method == "GET":
         return render_template("input_form_page.html")
 
+    # THIS HAS TO BE CHANGED TO OUR PERFORMANCE API
+    # -----------------------------------------
+
     elif request.method == "POST":
         prediction_input = [
             {
-                "schoolsup": int(request.form.get("schoolsup")),
-                "higher": int(request.form.get("higher")),
+                "schoolsup": str(request.form.get("schoolsup")),
+                "higher": str(request.form.get("higher")),
                 "absences": int(request.form.get("absences")),
                 "failures": int(request.form.get("failures")),
                 "Medu": int(request.form.get("Medu")),
@@ -33,7 +36,7 @@ def check_performance():
                 "studytime": int(request.form.get("studytime"))
             }
         ]
-        logging.info("Prediction Input: %s", prediction_input)
+        print(prediction_input)
 
         # -----------------------------------------
 
@@ -44,16 +47,6 @@ def check_performance():
         # json.dumps() function will convert a subset of Python objects into a json string.
         # json.loads() method can be used to parse a valid JSON string and convert it into a Python Dictionary.
         predictor_api_url = os.environ['PREDICTOR_API']
-
-        # This is just to test
-        res = requests.post(predictor_api_url, json=prediction_input)
-        try:
-            prediction_value = res.json().get('result')
-        except requests.exceptions.JSONDecodeError:
-            logging.error("Response is not valid JSON: %s", res.text)
-            return jsonify(message="Prediction API returned an invalid response"), 500
-
-
         res = requests.post(predictor_api_url, json=json.loads(json.dumps(prediction_input)))
 
         prediction_value = res.json()['result']
