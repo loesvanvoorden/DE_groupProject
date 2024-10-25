@@ -1,0 +1,262 @@
+# PIPELINE DEFINITION
+# Name: student-predictor-training-pipeline-v2
+# Inputs:
+#    data_bucket: str
+#    model_repo: str
+#    project_id: str
+#    testset_filename: str
+#    trainset_filename: str
+components:
+  comp-download-data:
+    executorLabel: exec-download-data
+    inputDefinitions:
+      parameters:
+        bucket:
+          parameterType: STRING
+        file_name:
+          parameterType: STRING
+        project_id:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-train-mlp:
+    executorLabel: exec-train-mlp
+    inputDefinitions:
+      artifacts:
+        features:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        out_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        metrics:
+          parameterType: STRUCT
+  comp-upload-model-to-gcs:
+    executorLabel: exec-upload-model-to-gcs
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        model_repo:
+          parameterType: STRING
+        project_id:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-download-data:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - download_data
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'google-cloud-storage'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main --component_module_path "$program_path/ephemeral_component.py" "$@"
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef download_data(project_id: str, bucket: str, file_name: str, dataset:\
+          \ Output[Dataset]):\n    '''download data'''\n    from google.cloud import\
+          \ storage\n    import pandas as pd\n    import logging \n    import sys\n\
+          \n    logging.basicConfig(stream=sys.stdout, level=logging.INFO)\n\n   \
+          \ # Downloading the file from a google bucket \n    client = storage.Client(project=project_id)\n\
+          \    bucket = client.bucket(bucket)\n    blob = bucket.blob(file_name)\n\
+          \    blob.download_to_filename(dataset.path + \".csv\")\n    logging.info('Downloaded\
+          \ Data!')\n\n"
+        image: python:3.10.7-slim
+    exec-train-mlp:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_mlp
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'scikit-learn'\
+          \ 'flask' 'logging' 'pathlib' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main --component_module_path "$program_path/ephemeral_component.py" "$@"
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train_mlp (features: Input[Dataset], out_model: Output[Model])\
+          \ -> NamedTuple('outputs', metrics=dict):\n    '''train a MLP with default\
+          \ parameters'''\n    import pandas as pd\n    import logging\n    import sys\n\
+          \    import os\n    import pickle\n    from sklearn.compose import ColumnTransformer\n\
+          \    from sklearn.ensemble import StackingClassifier\n    from sklearn.linear_model\
+          \ import LogisticRegression\n    from sklearn.metrics import accuracy_score, classification_report\n\
+          \    from sklearn.model_selection import StratifiedKFold, train_test_split\n\
+          \    from sklearn.pipeline import Pipeline\n    from sklearn.preprocessing\
+          \ import OneHotEncoder, StandardScaler\n    from sklearn.svm import SVC\n\
+          \    from flask import jsonify\n\n    logging.basicConfig(stream=sys.stdout,\
+          \ level=logging.INFO)\n\n    df = pd.read_csv(features.path+\".csv\")\n\n\
+          \    logging.info(df.columns)\n\n    # Define feature set X and target variable\
+          \ y\n    categorical_columns = ['schoolsup', 'higher']\n    numerical_columns\
+          \ = ['absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout',\
+          \ 'freetime', 'studytime']\n    columns_to_average = ['G1', 'G2', 'G3']\n\
+          \    df['Average_Grade'] = df[columns_to_average].mean(axis=1)\n    df['Average_Grade_Cat_1']\
+          \ = pd.cut(df['Average_Grade'], bins=[0, 10, 20], labels=[0, 1], include_lowest=True)\n\
+          \    X = df[numerical_columns + categorical_columns]\n    y = df['Average_Grade_Cat_1']\n\
+          \n    # Split data into training and test sets\n    X_train, X_test, y_train,\
+          \ y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\n    #\
+          \ Define pre-processing steps\n    preprocessor = ColumnTransformer(\n     \
+          \   transformers=[\n            ('num', StandardScaler(), numerical_columns),\n\
+          \            ('cat', OneHotEncoder(drop='if_binary'), categorical_columns)\n\
+          \        ])\n\n    # Define the base models\n    svm_linear_clf = SVC(C=0.1,\
+          \ kernel='linear', gamma='scale', class_weight='balanced', degree=2, probability=True)\n\
+          \    svm_rbf_clf = SVC(C=0.1, kernel='rbf', gamma='scale', class_weight='balanced',\
+          \ degree=2, probability=True)\n\n    # Meta-classifier\n    logreg = LogisticRegression(C=10,\
+          \ solver='newton-cg')\n\n    # Stacking ensemble classifier configuration\n\
+          \    stack_clf = StackingClassifier(\n        estimators=[\n            ('svm_linear_clf',\
+          \ svm_linear_clf),\n            ('svm_rbf', svm_rbf_clf)\n        ],\n     \
+          \   final_estimator=logreg,\n        cv=StratifiedKFold(n_splits=10, shuffle=True,\
+          \ random_state=42)\n    )\n\n    # Create the pipeline\n    pipeline = Pipeline(steps=[\n\
+          \        ('preprocessor', preprocessor),\n        ('classifier', stack_clf)\n\
+          \    ])\n\n    # Fit the pipeline to the training data\n    logging.info(\"Training\
+          \ the model with the following configuration...\")\n    pipeline.fit(X_train,\
+          \ y_train)\n\n    # Evaluate the model\n    y_pred = pipeline.predict(X_test)\n\
+          \    accuracy = accuracy_score(y_test, y_pred)\n    logging.info(f\"Test\
+          \ Accuracy: {accuracy}\")\n    print(f\"Test Accuracy: {accuracy}\")\n    print(classification_report(y_test,\
+          \ y_pred))\n\n    # Save the model as a .pkl file in a local path\n    local_file\
+          \ = '/tmp/model_train.pkl'  # Local path to save the model\n\n    with open(local_file,\
+          \ 'wb') as f:\n        pickle.dump(pipeline, f)\n\n    logging.info(f\"Model\
+          \ saved to {local_file}\")\n\n    out_model.metadata[\"file_type\"] = \".pkl\"\n\
+          \    out_model.metadata[\"algo\"] = \"mlp\"\n    # Save the model\n    m_file\
+          \ = out_model.path + \".pkl\"\n    with open(m_file, 'wb') as f:\n        pickle.dump(pipeline,\
+          \ f)\n\n    metrics_dict = {\n        \"accuracy\": accuracy\n    }\n\n    outputs\
+          \ = NamedTuple('outputs', metrics=dict)\n    return outputs(metrics_dict)\n\
+          \n"
+        image: python:3.10.7-slim
+    exec-upload-model-to-gcs:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - upload_model_to_gcs
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'google-cloud-storage'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main --component_module_path "$program_path/ephemeral_component.py" "$@"
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef upload_model_to_gcs(project_id: str, model_repo: str, model:\
+          \ Input[Model]):\n    '''upload model to gsc'''\n    from google.cloud import\
+          \ storage   \n    import logging \n    import sys\n\n    logging.basicConfig(stream=sys.stdout,\
+          \ level=logging.INFO)    \n\n    # upload the model to GCS\n    client =\
+          \ storage.Client(project=project_id)\n    bucket = client.bucket(model_repo)\n\
+          \    blob = bucket.blob(str(model.metadata[\"algo\"]) + '_model' + str(model.metadata[\"\
+          file_type\"])) \n    blob.upload_from_filename(model.path + str(model.metadata[\"\
+          file_type\"]))       \n\n    print(\"Saved the model to GCP bucket : \"\
+          \ + model_repo)\n\n"
+        image: python:3.10.7-slim
+pipelineInfo:
+  name: student-predictor-training-pipeline-v2
+root:
+  dag:
+    tasks:
+      download-data:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-download-data
+        inputs:
+          parameters:
+            bucket:
+              componentInputParameter: data_bucket
+            file_name:
+              componentInputParameter: trainset_filename
+            project_id:
+              componentInputParameter: project_id
+        taskInfo:
+          name: download-data
+      train-mlp:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-mlp
+        dependentTasks:
+        - download-data
+        inputs:
+          artifacts:
+            features:
+              taskOutputArtifact:
+                outputArtifactKey: dataset
+                producerTask: download-data
+        taskInfo:
+          name: train-mlp
+      upload-model-to-gcs:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-upload-model-to-gcs
+        dependentTasks:
+        - train-mlp
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: out_model
+                producerTask: train-mlp
+          parameters:
+            model_repo:
+              componentInputParameter: model_repo
+            project_id:
+              componentInputParameter: project_id
+        taskInfo:
+          name: upload-model-to-gcs
+  inputDefinitions:
+    parameters:
+      data_bucket:
+        parameterType: STRING
+      model_repo:
+        parameterType: STRING
+      project_id:
+        parameterType: STRING
+      testset_filename:
+        parameterType: STRING
+      trainset_filename:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.7.0

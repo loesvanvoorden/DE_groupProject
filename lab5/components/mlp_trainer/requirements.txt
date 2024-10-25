@@ -1,0 +1,6 @@
+google-cloud-storage
+pandas
+scikit-learn
+flask
+logging
+pathlib
