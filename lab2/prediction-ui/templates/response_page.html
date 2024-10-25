@@ -1,13 +1,46 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Likelihood of study performance</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Likelihood of Study Performance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        p {
+            text-align: center;
+            font-size: 18px;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
 
-{% if prediction_variable==1 %}
-    <p>It is likely that you will perform well at your study.</p>
-{% else %}
-    <p>It is unlikely that you will perform well at your study.</p>
-{% endif %}
+<div class="container">
+    <h1>Likelihood of Study Performance</h1>
+
+    {% if prediction_variable==1 %}
+        <p>It is likely that you will perform well at your study.</p>
+    {% else %}
+        <p>It is unlikely that you will perform well at your study.</p>
+    {% endif %}
+</div>
+
 </body>
 </html>
