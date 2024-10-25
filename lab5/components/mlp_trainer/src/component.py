@@ -17,6 +17,8 @@ from sklearn.svm import SVC
 from google.cloud import storage
 from flask import jsonify
 
+import json
+
 
 def train_mlp(project_id, feature_path, model_repo, metrics_path):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
