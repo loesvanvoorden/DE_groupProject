@@ -1,7 +1,7 @@
 {
-  "project_id": "your project id",
-  "data_bucket": "your project data bucket name",
+  "project_id": "de2024-436414",
+  "data_bucket": "assignment1de",
   "trainset_filename": "training_set.csv",
-  "testset_filename": "prediction_set.csv", 
-  "model_repo": "your project model repo"
+  "testset_filename": "prediction_set.csv",
+  "model_repo": "assignment1de"
 }
