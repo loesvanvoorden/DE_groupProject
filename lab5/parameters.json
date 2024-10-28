@@ -3,5 +3,5 @@
   "data_bucket": "data_de2024_17",
   "trainset_filename": "training_set.csv",
   "testset_filename": "prediction_set.csv",
-  "model_repo": "assignment1de"
+  "model_repo": "models_de2024_17"
 }
