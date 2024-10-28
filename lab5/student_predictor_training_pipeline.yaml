@@ -1,4 +1,3 @@
-# PIPELINE DEFINITION
 # Name: student-predictor-training-pipeline-v2
 # Inputs:
 #    data_bucket: str
@@ -65,27 +64,38 @@ deploymentSpec:
         command:
         - sh
         - -c
-        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
-          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
-          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'google-cloud-storage'\
-          \ && \"$0\" \"$@\"\n"
+        - |
+          if ! [ -x "$(command -v pip)" ]; then
+              python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+          fi
+          PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<"3.9"'  && python3 -m pip install --quiet --no-warn-script-location 'pandas' 'google-cloud-storage' && "$0" "$@"
         - sh
         - -ec
-        - 'program_path=$(mktemp -d)
+        - |
+          program_path=$(mktemp -d)
           printf "%s" "$0" > "$program_path/ephemeral_component.py"
           _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main --component_module_path "$program_path/ephemeral_component.py" "$@"
-          '
-        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
-          \ *\n\ndef download_data(project_id: str, bucket: str, file_name: str, dataset:\
-          \ Output[Dataset]):\n    '''download data'''\n    from google.cloud import\
-          \ storage\n    import pandas as pd\n    import logging \n    import sys\n\
-          \n    logging.basicConfig(stream=sys.stdout, level=logging.INFO)\n\n   \
-          \ # Downloading the file from a google bucket \n    client = storage.Client(project=project_id)\n\
-          \    bucket = client.bucket(bucket)\n    blob = bucket.blob(file_name)\n\
-          \    blob.download_to_filename(dataset.path + \".csv\")\n    logging.info('Downloaded\
-          \ Data!')\n\n"
+        - |
+          import kfp
+          from kfp import dsl
+          from kfp.dsl import *
+          from typing import *
+          
+          def download_data(project_id: str, bucket: str, file_name: str, dataset: Output[Dataset]):
+              '''download data'''
+              from google.cloud import storage
+              import pandas as pd
+              import logging 
+              import sys
+              
+              logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+              
+              # Downloading the file from a google bucket 
+              client = storage.Client(project=project_id)
+              bucket = client.bucket(bucket)
+              blob = bucket.blob(file_name)
+              blob.download_to_filename(dataset.path + ".csv")
+              logging.info('Downloaded Data!')
         image: python:3.10.7-slim
     exec-train-mlp:
       container:
@@ -97,66 +107,120 @@ deploymentSpec:
         command:
         - sh
         - -c
-        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
-          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
-          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'scikit-learn'\
-          \ 'flask' 'logging' 'pathlib' && \"$0\" \"$@\"\n"
+        - |
+          if ! [ -x "$(command -v pip)" ]; then
+              python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+          fi
+          PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<"3.9"'  && python3 -m pip install --quiet --no-warn-script-location 'pandas' 'scikit-learn' 'flask' 'logging' 'pathlib' && "$0" "$@"
         - sh
         - -ec
-        - 'program_path=$(mktemp -d)
+        - |
+          program_path=$(mktemp -d)
           printf "%s" "$0" > "$program_path/ephemeral_component.py"
           _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main --component_module_path "$program_path/ephemeral_component.py" "$@"
-          '
-        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
-          \ *\n\ndef train_mlp (features: Input[Dataset], out_model: Output[Model])\
-          \ -> NamedTuple('outputs', metrics=dict):\n    '''train a MLP with default\
-          \ parameters'''\n    import pandas as pd\n    import logging\n    import sys\n\
-          \    import os\n    import pickle\n    from sklearn.compose import ColumnTransformer\n\
-          \    from sklearn.ensemble import StackingClassifier\n    from sklearn.linear_model\
-          \ import LogisticRegression\n    from sklearn.metrics import accuracy_score, classification_report\n\
-          \    from sklearn.model_selection import StratifiedKFold, train_test_split\n\
-          \    from sklearn.pipeline import Pipeline\n    from sklearn.preprocessing\
-          \ import OneHotEncoder, StandardScaler\n    from sklearn.svm import SVC\n\
-          \    from flask import jsonify\n\n    logging.basicConfig(stream=sys.stdout,\
-          \ level=logging.INFO)\n\n    df = pd.read_csv(features.path+\".csv\")\n\n\
-          \    logging.info(df.columns)\n\n    # Define feature set X and target variable\
-          \ y\n    categorical_columns = ['schoolsup', 'higher']\n    numerical_columns\
-          \ = ['absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout',\
-          \ 'freetime', 'studytime']\n    columns_to_average = ['G1', 'G2', 'G3']\n\
-          \    df['Average_Grade'] = df[columns_to_average].mean(axis=1)\n    df['Average_Grade_Cat_1']\
-          \ = pd.cut(df['Average_Grade'], bins=[0, 10, 20], labels=[0, 1], include_lowest=True)\n\
-          \    X = df[numerical_columns + categorical_columns]\n    y = df['Average_Grade_Cat_1']\n\
-          \n    # Split data into training and test sets\n    X_train, X_test, y_train,\
-          \ y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\n    #\
-          \ Define pre-processing steps\n    preprocessor = ColumnTransformer(\n     \
-          \   transformers=[\n            ('num', StandardScaler(), numerical_columns),\n\
-          \            ('cat', OneHotEncoder(drop='if_binary'), categorical_columns)\n\
-          \        ])\n\n    # Define the base models\n    svm_linear_clf = SVC(C=0.1,\
-          \ kernel='linear', gamma='scale', class_weight='balanced', degree=2, probability=True)\n\
-          \    svm_rbf_clf = SVC(C=0.1, kernel='rbf', gamma='scale', class_weight='balanced',\
-          \ degree=2, probability=True)\n\n    # Meta-classifier\n    logreg = LogisticRegression(C=10,\
-          \ solver='newton-cg')\n\n    # Stacking ensemble classifier configuration\n\
-          \    stack_clf = StackingClassifier(\n        estimators=[\n            ('svm_linear_clf',\
-          \ svm_linear_clf),\n            ('svm_rbf', svm_rbf_clf)\n        ],\n     \
-          \   final_estimator=logreg,\n        cv=StratifiedKFold(n_splits=10, shuffle=True,\
-          \ random_state=42)\n    )\n\n    # Create the pipeline\n    pipeline = Pipeline(steps=[\n\
-          \        ('preprocessor', preprocessor),\n        ('classifier', stack_clf)\n\
-          \    ])\n\n    # Fit the pipeline to the training data\n    logging.info(\"Training\
-          \ the model with the following configuration...\")\n    pipeline.fit(X_train,\
-          \ y_train)\n\n    # Evaluate the model\n    y_pred = pipeline.predict(X_test)\n\
-          \    accuracy = accuracy_score(y_test, y_pred)\n    logging.info(f\"Test\
-          \ Accuracy: {accuracy}\")\n    print(f\"Test Accuracy: {accuracy}\")\n    print(classification_report(y_test,\
-          \ y_pred))\n\n    # Save the model as a .pkl file in a local path\n    local_file\
-          \ = '/tmp/model_train.pkl'  # Local path to save the model\n\n    with open(local_file,\
-          \ 'wb') as f:\n        pickle.dump(pipeline, f)\n\n    logging.info(f\"Model\
-          \ saved to {local_file}\")\n\n    out_model.metadata[\"file_type\"] = \".pkl\"\n\
-          \    out_model.metadata[\"algo\"] = \"mlp\"\n    # Save the model\n    m_file\
-          \ = out_model.path + \".pkl\"\n    with open(m_file, 'wb') as f:\n        pickle.dump(pipeline,\
-          \ f)\n\n    metrics_dict = {\n        \"accuracy\": accuracy\n    }\n\n    outputs\
-          \ = NamedTuple('outputs', metrics=dict)\n    return outputs(metrics_dict)\n\
-          \n"
+        - |
+          import kfp
+          from kfp import dsl
+          from kfp.dsl import *
+          from typing import *
+          
+          def train_mlp(features: Input[Dataset], out_model: Output[Model]) -> NamedTuple('outputs', metrics=dict):
+              '''train a MLP with default parameters'''
+              import pandas as pd
+              import logging
+              import sys
+              import os
+              import pickle
+              from sklearn.compose import ColumnTransformer
+              from sklearn.ensemble import StackingClassifier
+              from sklearn.linear_model import LogisticRegression
+              from sklearn.metrics import accuracy_score, classification_report
+              from sklearn.model_selection import StratifiedKFold, train_test_split
+              from sklearn.pipeline import Pipeline
+              from sklearn.preprocessing import OneHotEncoder, StandardScaler
+              from sklearn.svm import SVC
+              from flask import jsonify
+              
+              logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+              
+              df = pd.read_csv(features.path+".csv")
+              
+              logging.info(df.columns)
+              
+              # Define feature set X and target variable y
+              categorical_columns = ['schoolsup', 'higher']
+              numerical_columns = ['absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout', 'freetime', 'studytime']
+              columns_to_average = ['G1', 'G2', 'G3']
+              df['Average_Grade'] = df[columns_to_average].mean(axis=1)
+              df['Average_Grade_Cat_1'] = pd.cut(df['Average_Grade'], bins=[0, 10, 20], labels=[0, 1], include_lowest=True)
+              X = df[numerical_columns + categorical_columns]
+              y = df['Average_Grade_Cat_1']
+              
+              # Split data into training and test sets
+              X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+              
+              # Define pre-processing steps
+              preprocessor = ColumnTransformer(
+                  transformers=[
+                      ('num', StandardScaler(), numerical_columns),
+                      ('cat', OneHotEncoder(drop='if_binary'), categorical_columns)
+                  ])
+              
+              # Define the base models
+              svm_linear_clf = SVC(C=0.1, kernel='linear', gamma='scale', class_weight='balanced', degree=2, probability=True)
+              svm_rbf_clf = SVC(C=0.1, kernel='rbf', gamma='scale', class_weight='balanced', degree=2, probability=True)
+              
+              # Meta-classifier
+              logreg = LogisticRegression(C=10, solver='newton-cg')
+              
+              # Stacking ensemble classifier configuration
+              stack_clf = StackingClassifier(
+                  estimators=[
+                      ('svm_linear_clf', svm_linear_clf),
+                      ('svm_rbf', svm_rbf_clf)
+                  ],
+                  final_estimator=logreg,
+                  cv=StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+              )
+              
+              # Create the pipeline
+              pipeline = Pipeline(steps=[
+                  ('preprocessor', preprocessor),
+                  ('classifier', stack_clf)
+              ])
+              
+              # Fit the pipeline to the training data
+              logging.info("Training the model with the following configuration...")
+              pipeline.fit(X_train, y_train)
+              
+              # Evaluate the model
+              y_pred = pipeline.predict(X_test)
+              accuracy = accuracy_score(y_test, y_pred)
+              logging.info(f"Test Accuracy: {accuracy}")
+              print(f"Test Accuracy: {accuracy}")
+              print(classification_report(y_test, y_pred))
+              
+              # Save the model as a .pkl file in a local path
+              local_file = '/tmp/model_train.pkl'  # Local path to save the model
+              
+              with open(local_file, 'wb') as f:
+                  pickle.dump(pipeline, f)
+              
+              logging.info(f"Model saved to {local_file}")
+              
+              out_model.metadata["file_type"] = ".pkl"
+              out_model.metadata["algo"] = "mlp"
+              # Save the model
+              m_file = out_model.path + ".pkl"
+              with open(m_file, 'wb') as f:
+                  pickle.dump(pipeline, f)
+              
+              metrics_dict = {
+                  "accuracy": accuracy
+              }
+              
+              outputs = NamedTuple('outputs', metrics=dict)
+              return outputs(metrics_dict)
         image: python:3.10.7-slim
     exec-upload-model-to-gcs:
       container:
@@ -168,29 +232,36 @@ deploymentSpec:
         command:
         - sh
         - -c
-        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
-          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
-          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
-          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
-          \  python3 -m pip install --quiet --no-warn-script-location 'google-cloud-storage'\
-          \ && \"$0\" \"$@\"\n"
+        - |
+          if ! [ -x "$(command -v pip)" ]; then
+              python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip
+          fi
+          PIP_DISABLE_PIP_VERSION_CHECK=1 && "$0" "$@"
         - sh
         - -ec
-        - 'program_path=$(mktemp -d)
+        - |
+          program_path=$(mktemp -d)
           printf "%s" "$0" > "$program_path/ephemeral_component.py"
           _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main --component_module_path "$program_path/ephemeral_component.py" "$@"
-          '
-        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
-          \ *\n\ndef upload_model_to_gcs(project_id: str, model_repo: str, model:\
-          \ Input[Model]):\n    '''upload model to gsc'''\n    from google.cloud import\
-          \ storage   \n    import logging \n    import sys\n\n    logging.basicConfig(stream=sys.stdout,\
-          \ level=logging.INFO)    \n\n    # upload the model to GCS\n    client =\
-          \ storage.Client(project=project_id)\n    bucket = client.bucket(model_repo)\n\
-          \    blob = bucket.blob(str(model.metadata[\"algo\"]) + '_model' + str(model.metadata[\"\
-          file_type\"])) \n    blob.upload_from_filename(model.path + str(model.metadata[\"\
-          file_type\"]))       \n\n    print(\"Saved the model to GCP bucket : \"\
-          \ + model_repo)\n\n"
-        image: python:3.10.7-slim
+        - |
+          import kfp
+          from kfp import dsl
+          from kfp.dsl import *
+          from typing import *
+          
+          def upload_model_to_gcs(project_id: str, model_repo: str, model: Input[Model]):
+              '''upload model to GCS'''
+              from google.cloud import storage
+              import logging
+              import sys
+              
+              logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+              
+              client = storage.Client(project=project_id)
+              bucket = client.bucket(model_repo)
+              blob = bucket.blob(model.path.split('/')[-1])
+              blob.upload_from_filename(model.path)
+              logging.info(f'Model uploaded to {model_repo}')
 pipelineInfo:
   name: student-predictor-training-pipeline-v2
 root:
@@ -203,12 +274,9 @@ root:
           name: comp-download-data
         inputs:
           parameters:
-            bucket:
-              componentInputParameter: data_bucket
-            file_name:
-              componentInputParameter: trainset_filename
-            project_id:
-              componentInputParameter: project_id
+            bucket: {inputValue: data_bucket}
+            file_name: {inputValue: trainset_filename}
+            project_id: {inputValue: project_id}
         taskInfo:
           name: download-data
       train-mlp:
@@ -220,10 +288,7 @@ root:
         - download-data
         inputs:
           artifacts:
-            features:
-              taskOutputArtifact:
-                outputArtifactKey: dataset
-                producerTask: download-data
+            features: {taskOutputArtifact: download-data.dataset}
         taskInfo:
           name: train-mlp
       upload-model-to-gcs:
@@ -235,15 +300,10 @@ root:
         - train-mlp
         inputs:
           artifacts:
-            model:
-              taskOutputArtifact:
-                outputArtifactKey: out_model
-                producerTask: train-mlp
+            model: {taskOutputArtifact: train-mlp.out_model}
           parameters:
-            model_repo:
-              componentInputParameter: model_repo
-            project_id:
-              componentInputParameter: project_id
+            model_repo: {inputValue: model_repo}
+            project_id: {inputValue: project_id}
         taskInfo:
           name: upload-model-to-gcs
   inputDefinitions:
