@@ -52,7 +52,7 @@ class PerformancePredictor:
         logging.info(y_classes)
 
         df['pclass'] = np.where(y_classes > 0.5, 1, 0)
-        status = df['pclass'][0]
+        status = int(df['pclass'][0])  # Ensure it's a plain integer
 
-        return jsonify({int(status)}), 200
+        return jsonify({"prediction": status}), 200  # Send 'prediction' as a key with a value of 0 or 1
 
