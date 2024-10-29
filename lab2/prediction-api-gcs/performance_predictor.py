@@ -32,10 +32,21 @@ class PerformancePredictor:
         numerical_columns = ['absences', 'failures', 'Medu', 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout', 'freetime',
                              'studytime']
 
-@ @-45
+        self.preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', StandardScaler(), numerical_columns),
+                ('cat', OneHotEncoder(drop='if_binary'), categorical_columns)
+            ]
+        )
+        self.preprocessor.fit(dataset[numerical_columns + categorical_columns])
 
-    , 15 + 64, 32 @ @
 
+def predict_single_record(self, prediction_input):
+    logging.debug(prediction_input)
+    if self.model is None:
+        self.download_model()
+
+    # Convert the input JSON to a DataFrame
     def predict_single_record(self, prediction_input):
         self.download_model()
 
