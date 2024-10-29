@@ -15,16 +15,14 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import SVC
 from google.cloud import storage
-from flask import jsonify
-
 import json
 
 
 def train_mlp(project_id, feature_path, model_repo, metrics_path):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
+    # Load the dataset
     df = pd.read_csv(feature_path, index_col=None)
-
     logging.info(df.columns)
 
     # Define feature set X and target variable y
@@ -81,8 +79,7 @@ def train_mlp(project_id, feature_path, model_repo, metrics_path):
     print(classification_report(y_test, y_pred))
 
     # Save the model as a .pkl file in a local path
-    local_file = '/tmp/model_train.pkl'  # Local path to save the model
-
+    local_file = '/tmp/model_train_v1.pkl'  # Local path to save the model
     with open(local_file, 'wb') as f:
         pickle.dump(pipeline, f)
 
@@ -92,10 +89,8 @@ def train_mlp(project_id, feature_path, model_repo, metrics_path):
     client = storage.Client(project=project_id)
     bucket = client.get_bucket(model_repo)
     blob = bucket.blob('model.pkl')
-    # Upload the locally saved model
-    blob.upload_from_filename(local_file)
-    # Clean up
-    os.remove(local_file)
+    blob.upload_from_filename(local_file)  # Upload the locally saved model
+    os.remove(local_file)  # Clean up
     logging.info("Saved the model to GCP bucket : " + model_repo)
 
     # Creating the directory where the output file is created (the directory
@@ -110,11 +105,12 @@ def parse_command_line_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--project_id', type=str, help="GCP project id")
     parser.add_argument('--feature_path', type=str, help="CSV file with features")
-    parser.add_argument('--model_repo', type=str, help="Name of the model bucket")
+    parser.add_argument('--model_repo', type=str, required=True, help="Name of the model bucket")
     parser.add_argument('--metrics_path', type=str, help="Name of the file to be used for saving evaluation metrics")
     args = parser.parse_args()
     return vars(args)
 
 
 if __name__ == '__main__':
+    # Ensure that only command-line arguments are used for model_repo
     train_mlp(**parse_command_line_arguments())
