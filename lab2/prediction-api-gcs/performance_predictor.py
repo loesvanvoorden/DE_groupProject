@@ -25,8 +25,8 @@ class PerformancePredictor:
         client = storage.Client(project=project_id)
         bucket = client.bucket(model_repo)
         blob = bucket.blob(model_name)
-        blob.download_to_filename('local_model.pkl')
-        self.model = joblib.load('local_model.pkl')
+        blob.download_to_filename('model_train_v1.pkl')
+        self.model = joblib.load('model_train_v1.pkl')
 
     def fit_preprocessor(self, dataset):
         categorical_columns = ['schoolsup', 'higher']
