@@ -54,5 +54,5 @@ class PerformancePredictor:
         df['pclass'] = np.where(y_classes > 0.5, 1, 0)
         status = df['pclass'][0]
 
-        return jsonify({'predicted_class': int(status)}), 200
+        return jsonify({int(status)}), 200
 
