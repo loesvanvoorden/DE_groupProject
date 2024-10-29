@@ -31,6 +31,21 @@ def train_mlp(project_id, feature_path, model_repo, metrics_path):
     columns_to_average = ['G1', 'G2', 'G3']
     df['Average_Grade'] = df[columns_to_average].mean(axis=1)
     df['Average_Grade_Cat_1'] = pd.cut(df['Average_Grade'], bins=[0, 10, 20], labels=[0, 1], include_lowest=True)
+
+    # This code turns the schoolsup variable into a binary variable
+    df_one = pd.get_dummies(df["schoolsup"])
+    df_two = pd.concat((df_one, df), axis=1)
+    df_two = df_two.drop(["schoolsup"], axis=1)
+    df_two = df_two.drop(["no"], axis=1)
+    df_three = df_two.rename(columns={"yes": "schoolsup"})
+
+    # This code turns the higher variable into a binary variable
+    df_four = pd.get_dummies(df_three["higher"])
+    df_five = pd.concat((df_four, df_three), axis=1)
+    df_five = df_five.drop(["higher"], axis=1)
+    df_five = df_five.drop(["no"], axis=1)
+    df = df_five.rename(columns={"yes": "higher"})
+
     X = df[numerical_columns + categorical_columns]
     y = df['Average_Grade_Cat_1']
 

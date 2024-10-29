@@ -13,7 +13,7 @@ EXPOSE 5000
 # Enviroment Variables
 ENV PROJECT_ID=de2024-436414
 ENV MODEL_REPO=models_de2024_17
-ENV MODEL_NAME=model_train.pkl
+ENV MODEL_NAME=model_train_t2.pkl
 # Run our App
 CMD ["python3","app.py"]
 # We can also use an ENTRYPOINT and a CMD
