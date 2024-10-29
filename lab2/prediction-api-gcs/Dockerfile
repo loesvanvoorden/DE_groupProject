@@ -12,7 +12,7 @@ COPY . .
 EXPOSE 5000
 # Enviroment Variables
 ENV PROJECT_ID=de2024-436414
-ENV MODEL_REPO=assignment1de
+ENV MODEL_REPO=models_de2024_17
 ENV MODEL_NAME=model_train.pkl
 # Run our App
 CMD ["python3","app.py"]
