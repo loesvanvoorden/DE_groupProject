@@ -1,7 +1,4 @@
 # DE_groupProject
-Group project by Roeland Kramer, Roos Mast, Loes van Voorden and Levi Warren for the course Data Engineering
-
-Here's a README template for your MLOps project:
 
 ---
 
