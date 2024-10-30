@@ -13,7 +13,7 @@
        "name": "${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/pipeline-executor:0.0.1",
        "args": [
            "--name=student-predictor-mlp-pipeline",           
-		   "--pipeline_def=./lab5/performance_predictor_stacked_training_pipeline.yaml",
+		   "--pipeline_def=./lab5/student_predictor_mlp.yaml",
            "--pipeline_root=gs://${_TEMP_REPO}",         
 		   "--parameter_dict=./parameters_mlp.json"
         ]
