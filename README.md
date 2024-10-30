@@ -1,86 +1,114 @@
 # DE_groupProject
-Group project by Finn Franken, Ries Houthuijzen, Roeland Kramer, Roos Mast, Loes van Voorden and Levi Warren for the course Data Engineering
+Group project by Roeland Kramer, Roos Mast, Loes van Voorden and Levi Warren for the course Data Engineering
 
-## Planning:
-1. Select the Machine Learning Application
-Goal: Pick an ML use case. You can reuse any past projects (as long as they are not already dockerized or set up with Vertex AI pipelines) or find relevant ML projects on GitHub/Kaggle.
-Example: Past projects include breast cancer prediction​(Assignment 1 Example fr…)and toxicity classification​(Assignment 2 Example fr…).
-Platform: Any Python-based machine learning codebase (from GitHub/Kaggle or your previous projects).
+Here's a README template for your MLOps project:
 
-2. Set Up Google Cloud Platform (GCP)
-Goal: Configure your working environment on Google Cloud.
-Platform:
-Google Cloud Platform (GCP): Set up your Virtual Machine (VM) and other services like Google Cloud Storage and Vertex AI.
-**Key Actions**:
-- Create and configure a VM to run your ML pipelines.
-- Ensure Docker is installed on the VM, as you will need to containerize your models and services.
-- Use Google Cloud Storage as the data source for your pipelines.
+---
 
-3. Design the ML Pipeline
-Goal: Create an automated ML pipeline using Google Vertex AI. The pipeline includes data ingestion, training, and model validation.
-Platform:
-Google Vertex AI: Use Vertex AI Pipelines to automate the execution of each step of the ML workflow.
-**Key Actions**:
-- Containerize the components using Docker for data extraction, cleaning, and model training.
-- Develop and test pipeline components using Python (Jupyter notebooks can be helpful here).
-- Split your pipeline into separate stages, such as data extraction, cleaning, splitting, and model training​(Assignment 2 Example fr…).
-- Store intermediate outputs like training and test datasets in Google Cloud Storage.
+# MLOps System for Student Performance Prediction
 
-Example:
-For breast cancer prediction, separate components are used to clean and split the data​(Assignment 1 Example fr…).
-In a toxicity classification example, the pipeline consists of data ingestion, cleaning, splitting, training, and prediction components​(Assignment 2 Example fr…).
+### Data Engineering Assignment 1
+**Roeland Kramer, Roos Mast, Loes van Voorden, and Levi Warren**  
+**Date: October 30, 2024**
 
-4. CI/CD Pipelines
-Goal: Implement continuous integration and continuous deployment (CI/CD) pipelines to ensure the automation of pipeline execution, model retraining, and deployment.
-Platform:
-Google Cloud Build: Use Cloud Build for setting up CI/CD pipelines that automate deployment, training, and API exposure.
-**Key Actions**:
-- Create a YAML-based CI/CD pipeline configuration that defines triggers to re-execute the pipeline when the code changes or new data is uploaded​(Assignment 1 Example fr…).
-- Automate retraining and deployment of models using triggers in Cloud Build, which will automatically rebuild the Docker images and redeploy services when changes occur.
-Example:
-In the previous assignments, CI/CD pipelines triggered model retraining and redeployment based on new data or code changes.
+---
 
-5. Develop the Model as a Service (API)
-Goal: Expose your model as a service by creating RESTful APIs.
-Platform:
-Insomnia: Use Insomnia for API testing.
-Google Cloud Run: Deploy the model as a service (using Docker containers) with Google Cloud Run.
-**Key Actions**:
-- Develop prediction APIs and ensure they can be called via HTTP requests.
-- Set up and test endpoints using Insomnia. The endpoints should allow users to make predictions using the model hosted in the cloud​(Assignment 1 Example fr…).
-Example:
-Previous projects involved creating APIs for serving predictions via Flask apps or custom APIs​.
+## Table of Contents
 
-6. Develop a Prediction UI
-Goal: Create a simple front-end interface for users to interact with the model.
-Platform:
-Flask/HTML/CSS: Build a basic UI using Flask that allows users to input data and view predictions.
-**Key Actions**:
-- The UI should call the prediction API to get a result and display it to the user​
+1. [Overview of the ML Application](#overview-of-the-ml-application)
+2. [Goals and Requirements](#goals-and-requirements)
+3. [System Design and Architecture](#system-design-and-architecture)
+4. [Setup and Installation](#setup-and-installation)
+5. [Pipeline Workflow](#pipeline-workflow)
+6. [Reflection and Improvements](#reflection-and-improvements)
+7. [Contributors](#contributors)
 
-7. Deploy and Expose the Model
-Goal: Deploy the prediction service and make it publicly accessible.
-Platform:
-Google Cloud Run: Deploy the containerized application, expose it to the public, and ensure the APIs are accessible.
-**Key Actions**:
-- Ensure your deployment pipeline includes triggers that redeploy the prediction service when there are updates to the model or UI​(Assignment 2 Example fr…).
-- Set up public access to the API for external users to make predictions​(Assignment 1 Example fr…).
+---
 
-8. Write the Report
-Goal: Summarize your work in a concise report (max 7 pages).
-Structure:
-Overview of the ML Application:
-Describe the goal of your application (e.g., predicting cancer or classifying toxic comments).
-Design and Implementation of MLOps:
-Detail the pipeline, prediction service, and CI/CD setup​(Assignment 2 Example fr…).
-Reflection:
-Reflect on challenges, alternative designs, and potential improvements​(Assignment 2 Example fr…).
-Individual Contributions:
-Detail the roles of each team member in the project.
+## Overview of the ML Application
 
-9. Submission
-Goal: Submit the completed assignment.
-Platform:
-GitHub: Host all source code in a GitHub repository.
-Canvas: Submit the report and GitHub link through the Canvas submission system.
+This project presents an ML application designed to **predict student performance** based on demographic and academic factors. Leveraging a dataset from secondary school students, the application forecasts final grades as either "Fail" or "Succeed." The prediction model aims to help educators and institutions **identify at-risk students**, enabling timely interventions to improve academic outcomes.
+
+**Dataset Overview**  
+- **Columns**: 33 attributes including student demographics, family background, and academic history.
+- **Purpose**: To analyze and predict the likelihood of student success or failure.
+
+**Model**  
+- **Type**: Stacking ensemble of Support Vector Machine models.
+- **Source**: Adapted from Levi’s Introduction to Machine Learning project, where it achieved the highest accuracy among tested models.
+
+## Goals and Requirements
+
+### ML Application Goals
+- **Predict student performance** accurately based on available features.
+- **Assist educators** by identifying students needing additional support.
+- **Enable timely interventions** to improve student outcomes.
+
+### Technical and MLOps Requirements
+- **Data Quality**: Ensure clean, consistent data by preprocessing missing values and handling outliers.
+- **Model Performance**: High accuracy and generalization for reliable predictions.
+- **User Accessibility**: A user-friendly interface for educators to input data easily and obtain predictions.
+- **Compliance**: Anonymize sensitive data (e.g., student IDs) to ensure GDPR compliance.
+
+### MLOps Requirements
+- **Retraining**: Allow periodic model retraining to adapt to new data.
+- **Monitoring**: Track model performance and detect any degradation, such as data drift.
+- **API and UI**: Accessible endpoints for easy data input and output, without requiring technical expertise.
+
+## System Design and Architecture
+
+The MLOps system consists of three main components:
+
+1. **ML Pipeline**  
+   - **Ingestion and Preparation**: Data is imported from Google Cloud Storage, split into training and test sets, then processed for modeling.
+   - **Training**: The stacked model is trained using a split dataset and saved as an artifact.
+   - **Evaluation**: Model metrics are calculated, stored, and assessed for performance tracking.
+   
+2. **Prediction and Serving**  
+   - **Prediction API**: Back-end endpoint for processing single-instance predictions.
+   - **User Interface**: Front-end for educators to input data and view results.
+   
+3. **CI/CD Pipeline**  
+   - **Automation**: Google Cloud Build handles building, testing, and deploying model components.
+   - **Conditional Deployment**: Triggers determine if the model should be uploaded and deployed based on changes to data or configurations.
+
+**See Figure 1 in the Appendix for a visual of the pipeline architecture.**
+
+## Setup and Installation
+
+### Prerequisites
+- **Python** (version 3.8 or higher recommended)
+- **Google Cloud SDK** (for managing GCP resources)
+- **Docker** (for containerizing components)
+- **Access to Google Cloud** with Vertex AI, Cloud Build, and Cloud Storage permissions
+
+
+## Pipeline Workflow
+
+1. **Data Ingestion**: Imports data and stores it as an artifact.
+2. **Model Training**: Processes and trains a stacked model using a split dataset.
+3. **Evaluation**: Computes metrics and logs results for monitoring.
+4. **Prediction and Serving**: Accessible UI and API for generating predictions on new data: https://prediction-ui-925934865787.us-central1.run.app/checkperformance
+5. **CI/CD Automation**: Automatically triggers model retraining or updates on code changes or data refreshes.
+
+## Reflection and Improvements
+
+**Alternative Design Considerations**  
+- **Serverless Predictions**: Using Google Cloud Functions could simplify scaling and operational overhead.
+- **Batch Prediction**: Implementing a batch processing system could optimize resource usage for large datasets.
+
+**Potential Improvements**  
+- **Real-time Model Monitoring**: Adding monitoring to track data drift and prediction accuracy.
+- **Automated Hyperparameter Tuning**: Optimizing model accuracy by searching for the best parameter configurations.
+- **Data Versioning**: Adding version control for training data to track and reproduce previous model versions.
+
+## Contributors
+
+- **Roeland Kramer** - CI/CD setup, UI/API configuration
+- **Roos Mast** - Report writing, documentation
+- **Loes van Voorden** - UI and API setup, Vertex AI configuration
+- **Levi Warren** - Vertex AI pipeline, model training, and orchestration
+
+**Acknowledgments**  
+Special thanks to our instructors and mentors who guided us through the intricacies of MLOps implementation.
 
