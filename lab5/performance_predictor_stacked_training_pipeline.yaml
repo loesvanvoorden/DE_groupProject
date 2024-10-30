@@ -2,6 +2,7 @@
 # Name: performance-predictor-stacked-training-pipeline
 # Description: Pipeline definition for training, evaluation, and deployment
 # Inputs:
+#    data_bucket: str
 #    dataset_uri: str
 #    model_repo: str
 #    project_id: str
@@ -189,24 +190,30 @@ deploymentSpec:
 
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
-          \ *\n\ndef model_evaluation(test_set: Input[Dataset], model: Input[Model],\
-          \ thresholds_dict_str: str, metrics: Output[ClassificationMetrics], kpi:\
-          \ Output[Metrics]) -> NamedTuple('outputs', [('approval', bool)]):\n   \
-          \ '''Evaluates the model and approves it if accuracy meets the threshold'''\n\
-          \    import pandas as pd\n    import pickle\n    from sklearn.metrics import\
-          \ accuracy_score, roc_curve, confusion_matrix\n    import json\n    from\
-          \ numpy import nan_to_num\n\n    # Load test data\n    data = pd.read_csv(test_set.path\
-          \ + \".csv\")\n    X_test = data.drop(columns=[\"class\"])\n    y_test =\
-          \ data[\"class\"]\n\n    # Load model\n    with open(model.path + \".pkl\"\
-          , 'rb') as f:\n        pipeline = pickle.load(f)\n\n    # Make predictions\
-          \ and evaluate\n    y_pred = pipeline.predict(X_test)\n    accuracy = accuracy_score(y_test,\
-          \ y_pred)\n\n    # Log ROC curve\n    y_proba = pipeline.predict_proba(X_test)[:,\
-          \ 1]\n    fpr, tpr, thresholds = roc_curve(y_test, y_proba)\n    metrics.log_roc_curve(fpr.tolist(),\
-          \ tpr.tolist(), thresholds.tolist())\n\n    # Log Confusion Matrix\n   \
-          \ metrics.log_confusion_matrix(['Negative', 'Positive'], confusion_matrix(y_test,\
-          \ y_pred).tolist())\n\n    # Accuracy metric\n    kpi.log_metric(\"accuracy\"\
-          , accuracy)\n    threshold = json.loads(thresholds_dict_str)[\"roc\"]\n\
-          \    return (accuracy >= threshold, )\n\n"
+          \ *\n\ndef model_evaluation(\n    test_set: Input[Dataset],\n    model:\
+          \ Input[Model],\n    thresholds_dict_str: str,\n    metrics: Output[ClassificationMetrics],\n\
+          \    kpi: Output[Metrics]\n) -> NamedTuple('outputs', approval=bool):\n\
+          \    '''Evaluates the model and approves it if accuracy meets the threshold'''\n\
+          \n    import pandas as pd\n    import logging     \n    from sklearn.metrics\
+          \ import accuracy_score, roc_curve, confusion_matrix\n    import json\n\
+          \    import typing\n    import pickle\n    from numpy import nan_to_num\n\
+          \n    def threshold_check(val1, val2):\n        return val1 >= val2\n\n\
+          \    # Load test data\n    data = pd.read_csv(test_set.path + \".csv\")\n\
+          \    X_test = data.drop(columns=[\"Average_Grade_Cat_1\"], axis=1)\n   \
+          \ y_test = data[\"Average_Grade_Cat_1\"]\n\n    # Load the saved model\n\
+          \    m_filename = model.path + \".pkl\"\n    pipeline = pickle.load(open(m_filename,\
+          \ 'rb'))\n\n    # Make predictions\n    y_pred = pipeline.predict(X_test)\
+          \    \n\n    # Calculate predicted probabilities\n    y_proba = pipeline.predict_proba(X_test)[:,\
+          \ 1]\n\n    # Compute ROC curve\n    fpr, tpr, thresholds = roc_curve(y_test,\
+          \ y_proba)\n    thresholds = nan_to_num(thresholds)  # Handle NaN values\
+          \ if any\n    metrics.log_roc_curve(fpr.tolist(), tpr.tolist(), thresholds.tolist())\n\
+          \n    # Log Confusion Matrix\n    metrics.log_confusion_matrix(\n      \
+          \  ['Negative', 'Positive'],\n        confusion_matrix(y_test, y_pred).tolist()\n\
+          \    )\n\n    # Calculate accuracy\n    accuracy = accuracy_score(y_test,\
+          \ y_pred)\n    thresholds_dict = json.loads(thresholds_dict_str)\n\n   \
+          \ # Log accuracy metric\n    kpi.log_metric(\"accuracy\", float(accuracy))\n\
+          \n    # Check approval against the threshold\n    approval_value = threshold_check(float(accuracy),\
+          \ int(thresholds_dict['roc']))\n\n    return (approval_value, )\n\n"
         image: python:3.10.7-slim
     exec-run-build-trigger:
       container:
@@ -280,13 +287,13 @@ deploymentSpec:
           \ import LogisticRegression\n    from sklearn.svm import SVC\n    from sklearn.pipeline\
           \ import Pipeline\n    from sklearn.preprocessing import OneHotEncoder,\
           \ StandardScaler\n    import pickle\n\n    # Load the dataset\n    data\
-          \ = pd.read_csv(features.path + \".csv\")\n    categorical_columns = ['schoolsup',\
-          \ 'higher']\n    numerical_columns = ['absences', 'failures', 'Medu', 'Fedu',\
-          \ 'Walc', 'Dalc', 'famrel', 'goout', 'freetime', 'studytime']\n\n    # Preprocessing\
-          \ pipeline\n    preprocessor = ColumnTransformer(\n        transformers=[\n\
-          \            ('num', StandardScaler(), numerical_columns),\n           \
-          \ ('cat', OneHotEncoder(drop='if_binary'), categorical_columns)\n      \
-          \  ])\n\n    # Define base models and stacking ensemble\n    svm_linear\
+          \ = pd.read_csv(features.path + \".csv\")\n    categorical_columns = ['schoolsup_yes',\
+          \ 'higher_yes']\n    numerical_columns = ['absences', 'failures', 'Medu',\
+          \ 'Fedu', 'Walc', 'Dalc', 'famrel', 'goout', 'freetime', 'studytime']\n\n\
+          \    # Preprocessing pipeline\n    preprocessor = ColumnTransformer(\n \
+          \       transformers=[\n            ('num', StandardScaler(), numerical_columns),\n\
+          \            ('cat', OneHotEncoder(drop='if_binary'), categorical_columns)\n\
+          \        ])\n\n    # Define base models and stacking ensemble\n    svm_linear\
           \ = SVC(C=0.1, kernel='linear', probability=True)\n    svm_rbf = SVC(C=0.1,\
           \ kernel='rbf', probability=True)\n    meta_model = LogisticRegression(C=10)\n\
           \n    # Stacking ensemble\n    stack_clf = StackingClassifier(\n       \
@@ -294,7 +301,7 @@ deploymentSpec:
           \   final_estimator=meta_model,\n        cv=10\n    )\n\n    # Full pipeline\n\
           \    pipeline = Pipeline(steps=[\n        ('preprocessor', preprocessor),\n\
           \        ('classifier', stack_clf)\n    ])\n\n    # Train model\n    X =\
-          \ data[numerical_columns + categorical_columns]\n    y = data['class']\n\
+          \ data[numerical_columns + categorical_columns]\n    y = data['Average_Grade_Cat_1']\n\
           \    pipeline.fit(X, y)\n\n    # Save model\n    with open(model.path +\
           \ \".pkl\", 'wb') as f:\n        pickle.dump(pipeline, f)\n\n"
         image: python:3.10.7-slim
@@ -326,12 +333,20 @@ deploymentSpec:
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
           \ *\n\ndef train_test_split(dataset: Input[Dataset], dataset_train: Output[Dataset],\
-          \ dataset_test: Output[Dataset]):\n    '''Splits dataset into train and\
-          \ test sets'''\n    import pandas as pd\n    from sklearn.model_selection\
-          \ import train_test_split as tts\n\n    df = pd.read_csv(dataset.path)\n\
-          \    train, test = tts(df, test_size=0.2, random_state=42)\n    train.to_csv(dataset_train.path\
-          \ + \".csv\", index=False)\n    test.to_csv(dataset_test.path + \".csv\"\
-          , index=False)\n\n"
+          \ dataset_test: Output[Dataset]):\n    '''train_test_split'''\n    import\
+          \ pandas as pd\n    import logging \n    import sys\n    from sklearn.model_selection\
+          \ import train_test_split as tts\n\n    logging.basicConfig(stream=sys.stdout,\
+          \ level=logging.INFO) \n\n    alldata = pd.read_csv(dataset.path, index_col=None)\n\
+          \    columns_to_average = ['G1', 'G2', 'G3']\n\n    alldata['Average_Grade']\
+          \ = alldata[columns_to_average].mean(axis=1)\n    alldata['Average_Grade_Cat_1']\
+          \ = pd.cut(alldata['Average_Grade'], bins=[0, 10, 20], labels=[0, 1], include_lowest=True)\n\
+          \n    # Use pd.get_dummies directly on the DataFrame to create binary columns\n\
+          \    alldata = pd.get_dummies(alldata, columns=['schoolsup', 'higher'],\
+          \ drop_first=True)\n\n    # Split the dataset into train and test sets\n\
+          \    train, test = tts(alldata, test_size=0.3, random_state=42)\n\n    #\
+          \ Save the datasets\n    train.to_csv(dataset_train.path + \".csv\", index=False,\
+          \ encoding='utf-8-sig')\n    test.to_csv(dataset_test.path + \".csv\", index=False,\
+          \ encoding='utf-8-sig')\n\n"
         image: python:3.10.7-slim
     exec-upload-model-to-gcs:
       container:
@@ -474,6 +489,8 @@ root:
           name: train-test-split
   inputDefinitions:
     parameters:
+      data_bucket:
+        parameterType: STRING
       dataset_uri:
         parameterType: STRING
       model_repo:
