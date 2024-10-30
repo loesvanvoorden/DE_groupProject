@@ -71,15 +71,6 @@ The MLOps system consists of three main components:
 
 **See Figure 1 in the Appendix for a visual of the pipeline architecture.**
 
-## Setup and Installation
-
-### Prerequisites
-- **Python** (version 3.8 or higher recommended)
-- **Google Cloud SDK** (for managing GCP resources)
-- **Docker** (for containerizing components)
-- **Access to Google Cloud** with Vertex AI, Cloud Build, and Cloud Storage permissions
-
-
 ## Pipeline Workflow
 
 1. **Data Ingestion**: Imports data and stores it as an artifact.
