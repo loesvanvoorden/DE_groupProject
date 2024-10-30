@@ -43,7 +43,7 @@ def check_performance():
         # json.loads() method can be used to parse a valid JSON string and convert it into a Python Dictionary.
         predictor_api_url = os.environ['PREDICTOR_API']
         res = requests.post(predictor_api_url, json=json.loads(json.dumps(prediction_input)))
-        prediction_value = res.text
+        prediction_value = json.loads(res.text)
         logging.info("Prediction Output : %s", prediction_value)
         return render_template("response_page.html",
                                prediction_variable=prediction_value)
@@ -51,7 +51,7 @@ def check_performance():
     else:
         return jsonify(message="Method Not Allowed"), 405  # The 405 Method Not Allowed should be used to indicate
     # that our app that does not allow the users to perform any other HTTP method (e.g., PUT and  DELETE) for
-    # '/checkdiabetes' path
+    # '/checkperformance' path
 
 # The code within this conditional block will only run the python file is executed as a
 # script. See https://realpython.com/if-name-main-python/
