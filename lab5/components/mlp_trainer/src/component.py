@@ -94,7 +94,7 @@ def train_mlp(project_id, feature_path, model_repo, metrics_path):
     print(classification_report(y_test, y_pred))
 
     # Save the model as a .pkl file in a local path
-    local_file = '/tmp/model_train_v1.pkl'  # Local path to save the model
+    local_file = '/tmp/model_train_t2.pkl'  # Local path to save the model
     with open(local_file, 'wb') as f:
         pickle.dump(pipeline, f)
 
