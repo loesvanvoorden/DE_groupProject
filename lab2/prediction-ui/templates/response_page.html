@@ -36,9 +36,12 @@
     <h1>Likelihood of Study Performance</h1>
     <p>The prediction is: {{ prediction_variable}}</p>
 
+    <p>The prediction result is: {{ prediction_variable.status}}</p>
     <p>The prediction result is: {{ prediction_variable.prediction}}</p>
+    <p>The prediction result is: {{ prediction_variable["status"}}</p>
 
-    {% if prediction_variable.prediction==1 %}
+
+    {% if prediction_variable.status==1 %}
         <p>It is likely that you will perform well at your study.</p>
     {% else %}
         <p>It is unlikely that you will perform well at your study.</p>
